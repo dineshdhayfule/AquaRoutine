@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_250"
+        android:enabled="true"
+        android:icon="@drawable/ic_water_drop"
+        android:shortcutShortLabel="@string/add_250">
+        <intent
+            android:action="com.example.alarm.ADD_WATER"
+            android:targetPackage="com.example.alarm"
+            android:targetClass="com.example.alarm.MainActivity">
+            <extra android:name="amount" android:value="250" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="add_500"
+        android:enabled="true"
+        android:icon="@drawable/ic_water_drop"
+        android:shortcutShortLabel="@string/add_500">
+        <intent
+            android:action="com.example.alarm.ADD_WATER"
+            android:targetPackage="com.example.alarm"
+            android:targetClass="com.example.alarm.MainActivity">
+            <extra android:name="amount" android:value="500" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="view_stats"
+        android:enabled="true"
+        android:icon="@drawable/ic_water_drop"
+        android:shortcutShortLabel="@string/view_stats">
+        <intent
+            android:action="com.example.alarm.VIEW_STATS"
+            android:targetPackage="com.example.alarm"
+            android:targetClass="com.example.alarm.MainActivity" />
+    </shortcut>
+</shortcuts>

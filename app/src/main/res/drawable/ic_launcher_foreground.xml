@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Stylized Water Drop -->
+    <path
+        android:pathData="M54,20 C54,20 30,50 30,72 A24,24 0 1 0 78,72 C78,50 54,20 54,20 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="54"
+                android:endY="96"
+                android:startX="54"
+                android:startY="20"
+                android:type="linear">
+                <item
+                    android:color="#FFFFFF"
+                    android:offset="0.0" />
+                <item
+                    android:color="#E0F7FA"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Shimmer/Highlight on the drop -->
+    <path
+        android:fillColor="#4DFFFFFF"
+        android:pathData="M44,40 C44,40 38,50 38,60 A6,6 0 0 0 44,66 C44,66 46,60 46,50 C46,40 44,40 44,40 Z" />
+
+    <!-- Clock Face outline inside the drop -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,72m-16,0a16,16 0 1,1 32,0a16,16 0 1,1 -32,0"
+        android:strokeWidth="1.2"
+        android:strokeColor="#B2EBF2" />
+
+    <!-- Energetic Orange Clock Hands (10:10) -->
+    <!-- Hour hand -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,72 L47,65"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FF5722"
+        android:strokeLineCap="round" />
+    <!-- Minute hand -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,72 L64,62"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FF5722"
+        android:strokeLineCap="round" />
+
+    <!-- Center dot for hands -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M54,72m-2.5,0a2.5,2.5 0 1,1 5,0a2.5,2.5 0 1,1 -5,0" />
+
+</vector>

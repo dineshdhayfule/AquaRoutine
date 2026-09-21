@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">AquaRoutine</string>
+    <string name="add_250">Add 250ml</string>
+    <string name="add_500">Add 500ml</string>
+    <string name="view_stats">View Stats</string>
+</resources>
