@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.semantics
 @Composable
 fun WaterStatsScreen(
     viewModel: WaterStatsViewModel,
+    onNavigateToBackfill: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
@@ -60,22 +61,40 @@ fun WaterStatsScreen(
     val selectedPeriod by viewModel.selectedPeriod.collectAsStateWithLifecycle()
     val dailySummary by viewModel.dailySummary.collectAsStateWithLifecycle()
     val chartAnchorDate by viewModel.chartAnchorDate.collectAsStateWithLifecycle()
+    val isOwnerModeActive by viewModel.isOwnerModeActive.collectAsStateWithLifecycle()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var editingLog by remember { mutableStateOf<WaterLogEntity?>(null) }
     
+    var showPinManagement by remember { mutableStateOf(false) }
+    
     val isToday = remember(selectedDate) { selectedDate == LocalDate.now() }
+    val isEditable = isToday || isOwnerModeActive
+    val isPinSet by viewModel.isPinSet.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
 
-    if (showAddDialog && isToday) {
+    if (showPinManagement) {
+        PinManagementDialog(
+            isPinSet = isPinSet,
+            onVerifyPin = { viewModel.verifyPin(it) },
+            onSavePin = { viewModel.saveOwnerPin(it) },
+            onDisablePin = { viewModel.disableOwnerPin() },
+            onDismissRequest = { showPinManagement = false }
+        )
+    }
+
+    if (showAddDialog && isEditable) {
         AddWaterDialog(
             onDismissRequest = { showAddDialog = false },
-            onSubmit = { amount -> viewModel.addWaterLog(amount) }
+            onSubmit = { amount -> viewModel.addWaterLog(amount) }, // Normal add flow (today)
+            onUnlockOwnerMode = { pin -> viewModel.unlockOwnerMode(pin) },
+            isPinSet = isPinSet,
+            onOpenPinSetup = { showPinManagement = true }
         )
     }
 
     editingLog?.let { log ->
-        if (isToday) {
+        if (isEditable) {
             EditWaterLogDialog(
                 log = log,
                 onDismissRequest = { editingLog = null },
@@ -106,13 +125,18 @@ fun WaterStatsScreen(
         selectedPeriod = selectedPeriod,
         dailySummary = dailySummary,
         isToday = isToday,
+        isOwnerModeActive = isOwnerModeActive,
+        isEditable = isEditable,
+        onLockOwnerMode = { viewModel.lockOwnerMode() },
+        onOpenPinManagement = { showPinManagement = true },
         onPeriodSelected = viewModel::selectPeriod,
         onPrevDay = viewModel::previousDay,
         onNextDay = viewModel::nextDay,
-        onAddClick = { if (isToday) showAddDialog = true },
+        onAddClick = { if (isEditable) showAddDialog = true },
         onDateSelected = viewModel::selectDate,
-        onDeleteLog = { if (isToday) viewModel.deleteWaterLog(it) },
-        onLogClick = { if (isToday) editingLog = it },
+        onDeleteLog = { if (isEditable) viewModel.deleteWaterLog(it) },
+        onLogClick = { if (isEditable) editingLog = it },
+        onNavigateToBackfill = onNavigateToBackfill,
         modifier = modifier
     )
 }
@@ -131,6 +155,10 @@ fun WaterStatsContent(
     selectedPeriod: StatisticsPeriod,
     dailySummary: Pair<Float, Float>,
     isToday: Boolean,
+    isOwnerModeActive: Boolean,
+    isEditable: Boolean,
+    onLockOwnerMode: () -> Unit,
+    onOpenPinManagement: () -> Unit,
     onPeriodSelected: (StatisticsPeriod) -> Unit,
     onPrevDay: () -> Unit,
     onNextDay: () -> Unit,
@@ -138,6 +166,7 @@ fun WaterStatsContent(
     onDateSelected: (LocalDate) -> Unit,
     onDeleteLog: (WaterLogEntity) -> Unit,
     onLogClick: (WaterLogEntity) -> Unit,
+    onNavigateToBackfill: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -154,11 +183,36 @@ fun WaterStatsContent(
         modifier = modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Water Stats", fontWeight = FontWeight.Bold) }
+                title = { Text("Water Stats", fontWeight = FontWeight.Bold) },
+                actions = {
+                    if (isOwnerModeActive) {
+                        IconButton(onClick = onNavigateToBackfill) {
+                            Icon(
+                                Icons.Rounded.AddCircleOutline, 
+                                contentDescription = "Backfill Logs",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(onClick = onOpenPinManagement) {
+                            Icon(
+                                Icons.Rounded.Settings, 
+                                contentDescription = "Security Settings",
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        IconButton(onClick = onLockOwnerMode) {
+                            Icon(
+                                Icons.Rounded.Lock, 
+                                contentDescription = "Lock Owner Mode",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {
-            if (isToday) {
+            if (isEditable) {
                 FloatingActionButton(
                     onClick = onAddClick,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -315,11 +369,11 @@ fun WaterStatsContent(
                 items(filteredLogs, key = { it.id }) { log ->
                     WaterLogItem(
                         log = log,
-                        onDeleteClick = { if (isToday) onDeleteLog(log) },
-                        isEditable = isToday,
+                        onDeleteClick = { if (isEditable) onDeleteLog(log) },
+                        isEditable = isEditable,
                         modifier = Modifier
                             .animateItem()
-                            .clickable(enabled = isToday) { onLogClick(log) }
+                            .clickable(enabled = isEditable) { onLogClick(log) }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -613,11 +667,22 @@ fun WaterLogItem(
                     }
                 }
                 
-                Text(
-                    text = timeString,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = timeString,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (log.source == "BACKFILLED") {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "↩ Backfilled",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 
                 if (!log.note.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -679,6 +744,11 @@ fun WaterStatsScreenPreview() {
             hydrationStreak = 5,
             selectedPeriod = StatisticsPeriod.WEEK,
             dailySummary = 1.0f to 0.0f,
+            isToday = true,
+            isOwnerModeActive = false,
+            isEditable = true,
+            onLockOwnerMode = {},
+            onOpenPinManagement = {},
             onPeriodSelected = {},
             onPrevDay = {},
             onNextDay = {},
@@ -686,7 +756,7 @@ fun WaterStatsScreenPreview() {
             onDateSelected = {},
             onDeleteLog = {},
             onLogClick = {},
-            isToday = true
+            onNavigateToBackfill = {}
         )
     }
 }

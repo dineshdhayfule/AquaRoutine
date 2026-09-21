@@ -39,6 +39,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.example.alarm.data.AppDatabase
 import com.example.alarm.data.UserPreferences
 import com.example.alarm.data.repository.WaterRepository
+import com.example.alarm.ui.BackfillRoute
+import com.example.alarm.ui.BackfillScreen
 import com.example.alarm.ui.RoutineReminderRoute
 import com.example.alarm.ui.RoutineReminderScreen
 import com.example.alarm.ui.SettingsRoute
@@ -46,6 +48,7 @@ import com.example.alarm.ui.SettingsScreen
 import com.example.alarm.ui.WaterStatsRoute
 import com.example.alarm.ui.WaterStatsScreen
 import com.example.alarm.ui.theme.AlarmTheme
+import com.example.alarm.viewmodel.BackfillViewModel
 import com.example.alarm.viewmodel.SettingsViewModel
 import com.example.alarm.viewmodel.WaterIntakeViewModel
 import com.example.alarm.viewmodel.WaterStatsViewModel
@@ -205,7 +208,29 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                         )
-                                        WaterStatsScreen(viewModel = waterStatsViewModel)
+                                        WaterStatsScreen(
+                                            viewModel = waterStatsViewModel,
+                                            onNavigateToBackfill = { backStack.add(BackfillRoute) }
+                                        )
+                                    }
+                                    entry<BackfillRoute> {
+                                        val backfillViewModel: BackfillViewModel = viewModel(
+                                            factory = object : ViewModelProvider.Factory {
+                                                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                                    val db = AppDatabase.getDatabase(context)
+                                                    val waterLogDao = db.waterLogDao()
+                                                    val userPrefs = UserPreferences(context)
+                                                    val dailyGoalOverrideDao = db.dailyGoalOverrideDao()
+                                                    val waterRepository = WaterRepository(waterLogDao, dailyGoalOverrideDao, userPrefs)
+                                                    @Suppress("UNCHECKED_CAST")
+                                                    return BackfillViewModel(waterRepository, waterLogDao, userPrefs) as T
+                                                }
+                                            }
+                                        )
+                                        BackfillScreen(
+                                            viewModel = backfillViewModel,
+                                            onNavigateBack = { backStack.removeLastOrNull() }
+                                        )
                                     }
                                     entry<SettingsRoute> {
                                         val settingsViewModel: SettingsViewModel = viewModel(

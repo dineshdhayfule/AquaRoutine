@@ -50,7 +50,7 @@ class WaterRepository(
         var note: String? = null
         
         // 3. Check if goal reached/exceeded
-        if (currentTotal + amount > currentGoal) {
+        if (currentTotal + amount >= currentGoal) {
             val newGoal = currentGoal + 1000
             dailyGoalOverrideDao.insertOverride(DailyGoalOverride(today.toString(), newGoal))
             note = "Goal reached! +1L extra added to your target."

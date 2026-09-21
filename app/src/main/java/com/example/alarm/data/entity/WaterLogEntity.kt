@@ -10,5 +10,7 @@ data class WaterLogEntity(
     val timestamp: Long,
     val note: String? = null,
     val isDeleted: Boolean = false,
-    val originalAmount: Int = 0
+    val originalAmount: Int = 0,
+    val source: String = "LIVE",
+    val createdAt: Long = System.currentTimeMillis()
 )

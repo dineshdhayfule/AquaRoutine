@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.alarm.ui.components.EditGoalDialog
 import com.example.alarm.ui.components.EditProfileDialog
+import com.example.alarm.ui.components.PinManagementDialog
 import com.example.alarm.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

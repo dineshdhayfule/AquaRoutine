@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.alarm.data.dao.AlarmDao
 import com.example.alarm.data.dao.DailyGoalOverrideDao
 import com.example.alarm.data.dao.WaterLogDao
@@ -11,7 +13,7 @@ import com.example.alarm.data.entity.AlarmEntity
 import com.example.alarm.data.entity.DailyGoalOverride
 import com.example.alarm.data.entity.WaterLogEntity
 
-@Database(entities = [WaterLogEntity::class, AlarmEntity::class, DailyGoalOverride::class], version = 5, exportSchema = false)
+@Database(entities = [WaterLogEntity::class, AlarmEntity::class, DailyGoalOverride::class], version = 6, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun waterLogDao(): WaterLogDao
     abstract fun alarmDao(): AlarmDao
@@ -27,6 +29,14 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE water_logs ADD COLUMN originalAmount INTEGER NOT NULL DEFAULT 0")
             }
         }
+        
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE water_logs ADD COLUMN source TEXT NOT NULL DEFAULT 'LIVE'")
+                db.execSQL("ALTER TABLE water_logs ADD COLUMN createdAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE water_logs SET createdAt = timestamp")
+            }
+        }
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -35,7 +45,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "alarm_database"
                 )
-                    .addMigrations(MIGRATION_4_5)
+                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
                     .fallbackToDestructiveMigration() // For development, use destructive migration
                     .build()
                 INSTANCE = instance

@@ -11,6 +11,7 @@ import com.example.alarm.widget.WaterWidget
 import androidx.glance.appwidget.updateAll
 import android.content.Context
 import java.time.Instant
+import com.example.alarm.OwnerModeManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -33,6 +34,9 @@ class WaterStatsViewModel(
     private val waterRepository: WaterRepository,
     private val context: Context
 ) : ViewModel() {
+
+    private val ownerModeManager = OwnerModeManager.getInstance(context)
+    val isOwnerModeActive: StateFlow<Boolean> = ownerModeManager.isOwnerModeActive
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
@@ -262,6 +266,38 @@ class WaterStatsViewModel(
         adjustAnchorDateIfNeeded(newDate, _selectedPeriod.value)
     }
 
+    private val securityManager = com.example.alarm.data.SecurityManager(context)
+    
+    private val _isPinSet = MutableStateFlow(securityManager.isPinSet())
+    val isPinSet: StateFlow<Boolean> = _isPinSet.asStateFlow()
+
+    fun isPinConfigured(): Boolean {
+        return securityManager.isPinSet()
+    }
+    
+    fun verifyPin(pin: String): Boolean {
+        return securityManager.verifyPin(pin)
+    }
+
+    fun saveOwnerPin(pin: String) {
+        securityManager.saveOwnerPin(pin)
+        _isPinSet.value = true
+    }
+
+    fun disableOwnerPin() {
+        securityManager.disableOwnerPin()
+        _isPinSet.value = false
+        lockOwnerMode()
+    }
+
+    fun unlockOwnerMode(pin: String): Boolean {
+        return ownerModeManager.unlock(pin)
+    }
+
+    fun lockOwnerMode() {
+        ownerModeManager.lock()
+    }
+
     fun addWaterLog(amount: Int) {
         viewModelScope.launch {
             waterRepository.addWaterLog(amount)
@@ -271,20 +307,22 @@ class WaterStatsViewModel(
 
     fun updateWaterLog(log: WaterLogEntity, newAmount: Int) {
         val logDate = Instant.ofEpochMilli(log.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-        if (logDate != LocalDate.now()) return // Only allow editing today's logs
+        if (logDate != LocalDate.now() && !isOwnerModeActive.value) return // Block if not today and not owner
 
         viewModelScope.launch {
             waterLogDao.updateLog(log.copy(amountMl = newAmount))
+            ownerModeManager.resetTimeout() // Reset timeout on activity
             WaterWidget().updateAll(context)
         }
     }
 
     fun deleteWaterLog(log: WaterLogEntity) {
         val logDate = Instant.ofEpochMilli(log.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-        if (logDate != LocalDate.now()) return // Only allow deleting today's logs
+        if (logDate != LocalDate.now() && !isOwnerModeActive.value) return // Block if not today and not owner
 
         viewModelScope.launch {
             waterRepository.deleteWaterLog(log)
+            ownerModeManager.resetTimeout() // Reset timeout on activity
             WaterWidget().updateAll(context)
         }
     }

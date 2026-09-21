@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.Flow
 interface WaterLogDao {
     @Insert
     suspend fun insertLog(log: WaterLogEntity)
+    
+    @Insert
+    suspend fun insertLogs(logs: List<WaterLogEntity>)
 
     @Update
     suspend fun updateLog(log: WaterLogEntity)
