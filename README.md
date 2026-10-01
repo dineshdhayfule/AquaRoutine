@@ -43,15 +43,3 @@ A modern Android application built with Jetpack Compose designed to help users t
    ```
 2. **Open in Android Studio**: Use Android Studio Ladybug (2024.2.1) or newer.
 3. **Build and Run**: Deploy to an emulator or physical device running Android 8.0 (API 26) or higher.
-
-## 📸 Screenshots
-
-| Dashboard | Statistics | Settings |
-| :---: | :---: | :---: |
-| ![Dashboard](https://via.placeholder.com/200x400?text=Dashboard) | ![Statistics](https://via.placeholder.com/200x400?text=Statistics) | ![Settings](https://via.placeholder.com/200x400?text=Settings) |
-
-*(Note: Replace placeholders with actual screenshots for a better preview)*
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
